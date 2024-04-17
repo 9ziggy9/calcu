@@ -94,7 +94,7 @@ int main(void) {
       clear_input(w_in);
       wrefresh(w_in);
       wrefresh(w_out);
-    } else if (cursor_p < LEN_INPUT_BUFFER && cursor_p >= 0) {
+    } else if (cursor_p < LEN_INPUT_BUFFER) {
       if (ch == KEY_BACKSPACE) {
         cursor_p = cursor_p == 0 ? cursor_p : cursor_p - 1;
         input_buffer[cursor_p] = '\0';

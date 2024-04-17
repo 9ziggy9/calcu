@@ -1,4 +1,4 @@
-CC=clang
+CC=cc
 CFLAGS=-Wall -Wextra -pedantic -Wconversion -Wunreachable-code -Wno-gnu
 EXE=./calcu
 

@@ -9,7 +9,19 @@ what is necessary from the token stream--in order for an operation to be
 performed via floating point arithmetic, you must include a decimal point.\\
 
 The main entry point includes a small ncurses frontend.
+
+** Installation
+/dependencies/: ncurses
+
+*** Makefile
 #+BEGIN_SRC console
 $ make
+$ ./calcu
+#+END_SRC
+
+*** Shell
+#+BEGIN_SRC console
+$ chmod +x ./build.sh
+$ ./build.sh
 $ ./calcu
 #+END_SRC
