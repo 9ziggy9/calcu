@@ -33,10 +33,13 @@ static inline double as_float(Token *tkn) {
 // accepts bool "has_float" as a flag, in has_float mode we want to
 // coerce all longs into doubles.
 
+static bool found_numeric(ASTBinaryNode *n) {
+  return (n->tkn.kind == NUMERIC_F || n->tkn.kind == NUMERIC_I);
+}
+
 Token eval_ast(ASTBinaryNode *node) {
-  if (node->tkn.kind == NUMERIC_F || node->tkn.kind == NUMERIC_I) {
-    return node->tkn;
-  }
+  if (found_numeric(node)) return node->tkn;
+
   Token a = eval_ast(node->lhs);
   Token b = eval_ast(node->rhs);
 
