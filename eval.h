@@ -3,58 +3,68 @@
 
 #include "lexer.h"
 #include "parse.h"
+#include "exit.h"
 
-ValueNumeric eval_ast(ASTBinaryNode *);
+Token eval_ast(ASTBinaryNode *);
+int read_from_eval(char *, Token);
 
-ValueNumeric eval_ast(ASTBinaryNode *node) {
-  if (node->kind == NUMERIC_I || node->kind == NUMERIC_F) {
-    return node->value;
-  } else {
-    ValueNumeric lhs = eval_ast(node->lhs);
-    ValueNumeric rhs = eval_ast(node->rhs);
-    ValueNumeric result;
-
-    // Determine the type of the operation based on lhs and rhs
-    bool is_float = (node->lhs->kind == NUMERIC_F ||
-                     node->rhs->kind == NUMERIC_F);
-
-    switch (node->kind) {
-      case OP_ADD:
-        if (is_float)
-          result.fval = (lhs.kind == NUMERIC_F ? lhs.fval : lhs.ival) +
-                        (rhs.kind == NUMERIC_F ? rhs.fval : rhs.ival);
-        else
-          result.ival = lhs.ival + rhs.ival;
-        break;
-      case OP_SUB:
-        if (is_float)
-          result.fval = (lhs.kind == NUMERIC_F ? lhs.fval : lhs.ival) -
-                        (rhs.kind == NUMERIC_F ? rhs.fval : rhs.ival);
-        else
-          result.ival = lhs.ival - rhs.ival;
-        break;
-      case OP_MUL:
-        if (is_float)
-          result.fval = (lhs.kind == NUMERIC_F ? lhs.fval : lhs.ival) *
-                        (rhs.kind == NUMERIC_F ? rhs.fval : rhs.ival);
-        else
-          result.ival = lhs.ival * rhs.ival;
-        break;
-      case OP_DIV:
-        if (rhs.kind == NUMERIC_F && rhs.fval == 0) exit(EXIT_FAILURE);
-        if (rhs.kind == NUMERIC_I && rhs.ival == 0) exit(EXIT_FAILURE);
-        if (is_float)
-          result.fval = (lhs.kind == NUMERIC_F ? lhs.fval : lhs.ival) /
-                        (rhs.kind == NUMERIC_F ? rhs.fval : rhs.ival);
-        else
-          result.ival = lhs.ival / rhs.ival;
-        break;
-      default: exit(EXIT_FAILURE);
-    }
-    result.kind = is_float ? NUMERIC_F : NUMERIC_I;
-    return result;
-  }
+static inline token_kind set_kind(Token *t1, Token *t2) {
+  return (t1->kind == NUMERIC_F || t2->kind == NUMERIC_F)
+    ? NUMERIC_F
+    : NUMERIC_I;
 }
 
+static inline double as_float(Token *tkn) {
+  return tkn->kind == NUMERIC_F ? tkn->value.fval : (double) tkn->value.ival;
+}
+
+#ifdef EVAL_IMPL
+Token eval_ast(ASTBinaryNode *node) {
+  if (node->tkn.kind == NUMERIC_F || node->tkn.kind == NUMERIC_I) {
+    return node->tkn;
+  }
+  Token a = eval_ast(node->lhs);
+  Token b = eval_ast(node->rhs);
+
+  Token result = (Token) { .kind = set_kind(&a, &b) };
+
+  switch (node->tkn.kind) {
+  case OP_ADD:
+    if (result.kind == NUMERIC_I)
+      result.value.ival = a.value.ival + b.value.ival;
+    else result.value.fval = as_float(&a) + as_float(&b);
+    break;
+  case OP_SUB:
+    if (result.kind == NUMERIC_I)
+      result.value.ival = a.value.ival - b.value.ival;
+    else result.value.fval = as_float(&a) - as_float(&b);
+    break;
+  case OP_MUL:
+    if (result.kind == NUMERIC_I)
+      result.value.ival = a.value.ival * b.value.ival;
+    else result.value.fval = as_float(&a) * as_float(&b);
+    break;
+  case OP_DIV:
+    if (result.kind == NUMERIC_I) {
+      if (b.value.ival == 0) PANIC(EXIT_DIVIDE_BY_ZERO);
+      result.value.ival = a.value.ival / b.value.ival;
+    }
+    else {
+      if (b.value.fval == 0) PANIC(EXIT_DIVIDE_BY_ZERO);
+      result.value.fval = as_float(&a) / as_float(&b);
+    }
+    break;
+  default: break;
+  }
+  return result;
+}
+
+int read_from_eval(char *buffer, Token tkn) {
+  switch (tkn.kind) {
+  case NUMERIC_F: return sprintf(buffer, " = %g",  tkn.value.fval);
+  case NUMERIC_I: return sprintf(buffer, " = %ld", tkn.value.ival);
+  default: return -1;
+  }
+}
 #endif // EVAL_IMPL
 #endif // EVAL_H_

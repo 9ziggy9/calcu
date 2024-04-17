@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "exit.h"
 
 typedef enum {
   OP_SUB, OP_ADD, OP_MUL, OP_DIV,
@@ -26,30 +27,10 @@ void token_append(TokenStream *, Token);
 TokenStream lex_expr(char *);
 void token_stream_trace(TokenStream *);
 
-typedef enum {
-  EXIT_STREAM_OVERFLOW = 9000       ,
-  EXIT_STREAM_ALLOC_FAIL            ,
-  EXIT_STREAM_INVALID_CHAR          ,
-  EXIT_STREAM_UNEXPECTED_TERMINATOR ,
-} error_stream_t;
-void token_print_error(error_stream_t);
-
 #ifdef LEXER_IMPL
-#define LOG_BREAK_ERR(S) case S: fprintf(stderr, ""#S"\n"); break;
-void token_print_error(error_stream_t e) {
-  if (e >= EXIT_STREAM_OVERFLOW && e <= 9100) {
-    fprintf(stderr, "%s() :: ", __func__);
-    switch (e) {
-    LOG_BREAK_ERR(EXIT_STREAM_OVERFLOW);
-    LOG_BREAK_ERR(EXIT_STREAM_ALLOC_FAIL);
-    LOG_BREAK_ERR(EXIT_STREAM_INVALID_CHAR);
-    LOG_BREAK_ERR(EXIT_STREAM_UNEXPECTED_TERMINATOR);
-    }
-  }
-}
 
 void token_append(TokenStream *stream, Token tk) {
-  if (stream->n_tks >= stream->cap) exit(EXIT_STREAM_OVERFLOW);
+  if (stream->n_tks >= stream->cap) PANIC(EXIT_STREAM_OVERFLOW);
   stream->tks[stream->n_tks++] = tk;
 }
 
@@ -68,7 +49,7 @@ Token next_token(TokenStream *ts) {
 TokenStream lex_expr(char *expr) {
   TokenStream stream = { .n_tks = 0, .cap = MAX_TOKEN_STREAM, .tks = NULL };
   stream.tks = (Token *) malloc(stream.cap * sizeof(Token));
-  if (stream.tks == NULL) exit(EXIT_STREAM_ALLOC_FAIL);
+  if (stream.tks == NULL) PANIC(EXIT_STREAM_ALLOC_FAIL);
   while (*expr != '\0') {
     if (isspace(*expr)) expr++;
     switch (*expr) {
@@ -81,7 +62,7 @@ TokenStream lex_expr(char *expr) {
     default : {
       if (!isdigit(*expr)) {
         fprintf(stderr, "bad char: %c\n", *expr);
-        exit(EXIT_STREAM_INVALID_CHAR); 
+        PANIC(EXIT_STREAM_INVALID_CHAR); 
       }
 
       char *expr_end; 
@@ -123,7 +104,7 @@ void token_stream_trace(TokenStream *stream) {
       printf("[%s: %ld]", STR_FROM_OP(NUMERIC_I),
              stream->tks[count].value.ival);
       break;
-    case TERMINATOR: exit(EXIT_STREAM_UNEXPECTED_TERMINATOR);
+    case TERMINATOR: PANIC(EXIT_STREAM_UNEXPECTED_TERMINATOR);
     }
     count++;
     printf(count < stream->n_tks ? " -> " : "\n");

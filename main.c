@@ -4,6 +4,9 @@
 #include <unistd.h>
 #include <string.h>
 
+#define EXIT_IMPL
+#include "exit.h"
+
 #define LEXER_IMPL
 #include "lexer.h"
 
@@ -28,29 +31,13 @@ void ui_init(void) {
   init_pair(4, COLOR_RED,    COLOR_BLUE);
 }
 
-#define EXIT_WIN_ALLOC_FAIL 1000
-#define EXIT_OUT_OVERFLOW 1001
-
-void cleanup_ncurses(int exit_code, void *args) {
-  WINDOW **ws = (WINDOW **) args;
-  delwin(ws[0]); // output
-  delwin(ws[1]); // input
-  endwin();
-  if (exit_code == EXIT_WIN_ALLOC_FAIL) {
-    fprintf(stderr, "ERROR: allocation of window failed\n");
-  }
-  if (exit_code == EXIT_OUT_OVERFLOW) {
-    fprintf(stderr, "ERROR: overflew out window.\n");
-  }
-}
-
 #define LEN_INPUT_BUFFER 280
 
 #ifndef PARSE_TEST
 int main(void) {
   WINDOW *w_out = NULL, *w_in = NULL;
   ui_init();
-  on_exit(cleanup_ncurses, (WINDOW *[]){w_out, w_in});
+  on_exit(exit_clean_handler, (WINDOW *[]){w_out, w_in});
 
   int screen_height = getmaxy(stdscr);
   int screen_width  = getmaxx(stdscr);
@@ -92,7 +79,10 @@ int main(void) {
       char result_str[MAX_NUM_DIGITS];
       TokenStream ts = lex_expr(input_buffer);
       ASTBinaryNode *ast_root = parse_stream(&ts);
-      sprintf(result_str, "= %lf", eval_ast(ast_root));
+      Token result = eval_ast(ast_root);
+
+      read_from_eval(result_str, result);
+
       memcpy(output_buffer[line_p++], result_str, MAX_NUM_DIGITS);
 
       for (size_t y = 0; y < line_p; y++) {
@@ -133,9 +123,10 @@ void handle_stream_error(int exit_code, void *args) {
 int main(void) {
   on_exit(handle_stream_error, NULL);
 
-  char *expr = "2 * 3 + (3 * 4 * (10 / 2))";
-  printf("\nRAW EXPRESSION: %s\n", expr);
-  TokenStream stream = lex_expr(expr);
+  char *expr1 = "2 * 3 + (3 * 4 * (10.33 / 2))";
+
+  printf("\nRAW EXPRESSION: %s\n", expr1);
+  TokenStream stream = lex_expr(expr1);
 
   printf("\nTOKEN STREAM:\n");
   token_stream_trace(&stream);
@@ -144,7 +135,10 @@ int main(void) {
   ASTBinaryNode *ast_root = parse_stream(&stream);
   ast_parse_trace(ast_root, 0);
 
-  printf("\nRESULT: %lf\n", eval_ast(ast_root));
+  Token result = eval_ast(ast_root);
+  printf("\nRESULT: fval: %g, ival: %ld\n",
+         result.value.fval, result.value.ival);
+
   return EXIT_SUCCESS;
 }
 

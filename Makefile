@@ -1,6 +1,5 @@
 CC=clang
-CFLAGS=-Wall -Wextra -pedantic -Wconversion \
-			 -Wunreachable-code -Wswitch-enum -Wno-gnu
+CFLAGS=-Wall -Wextra -pedantic -Wconversion -Wunreachable-code -Wno-gnu
 EXE=./calcu
 
 all: main
