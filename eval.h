@@ -19,6 +19,20 @@ static inline double as_float(Token *tkn) {
 }
 
 #ifdef EVAL_IMPL
+
+// TODO: this pre-scans AST to determine if floating points
+// will be necessary, this can be incorporated to ensure that
+// no loss of floating point information is lost during the eval
+// traversal.
+/* static bool has_float(ASTBinaryNode *node) { */
+/*   if (node == NULL) return false; */
+/*   if (node->tkn.kind == NUMERIC_F) return true; */
+/*   return has_float(node->lhs) || has_float(node->rhs); */
+/* } */
+// TODO: should be amended into a non-exposed inner function which
+// accepts bool "has_float" as a flag, in has_float mode we want to
+// coerce all longs into doubles.
+
 Token eval_ast(ASTBinaryNode *node) {
   if (node->tkn.kind == NUMERIC_F || node->tkn.kind == NUMERIC_I) {
     return node->tkn;
