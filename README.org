@@ -1,0 +1,13 @@
+* calcu
+#+HTML: <img src="./ss.png" alt="calcu ss" />
+This is a simple binary arithmetic expression evaluator implemented
+via a generalization of Shunting Yard algorithm to abstract syntax trees.
+This program is implemented *using only C*.\\
+Floating point and integer arithmetic is supported, the parser will infer
+what is necessary from the token stream--in order for an operation to be
+performed via floating point arithmetic, you must include a decimal point.\\
+The main entry point includes a small ncurses frontend.\\
+#+BEGIN_SRC console
+$ make
+$ ./calcu
+#+END_SRC

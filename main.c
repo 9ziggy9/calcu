@@ -64,10 +64,6 @@ int main(void) {
   size_t cursor_p = 0;
   size_t line_p = 0;
 
-  /* TODO: implement output_buffer which keeps a line number
-    (analogous to cursor p) and stores input buffer output
-    in a char[MAX_LINES][LEN_INPUT_BUFFER] (an array of strings) */
-
   #define KEY_ESC 27
   #define MAX_NUM_DIGITS 32
   while((ch = wgetch(w_in)) != KEY_ESC) {
